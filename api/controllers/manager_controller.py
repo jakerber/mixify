@@ -67,4 +67,6 @@ def manage_active_queues(token: str) -> dict:
             top_song.save()
             songs_queued_on_spotify[active_queue.name] = top_song.name
 
+    print({'queued_songs': songs_queued_on_spotify})  # easy debugging :)
+
     return songs_queued_on_spotify
