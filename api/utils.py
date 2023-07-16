@@ -1,4 +1,5 @@
 """Mixify API utility function module."""
+import datetime
 import random
 from db import models
 from api import spotify
@@ -51,11 +52,18 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
         if (not current_song and queue_song.spotify_track_id == current_spotify_track_playing
                 and queue_song.added_to_spotify_queue_on_utc is not None):
             current_song = queue_song_info
+            queue_song.played_on_utc = datetime.datetime.utcnow()
+            queue_song.save()
         elif (queue_song.added_to_spotify_queue_on_utc is not None
               and queue_song.spotify_track_id not in current_spotify_queue_track_ids):
             played_songs.append(queue_song_info)
         else:
-            queued_songs.append(queue_song_info)
+
+            # TODO: Handle case of already played song appearing as in the queue because Spotify
+            # added it under the "Next from" section.
+
+            if queue_song.played_on_utc is None:
+                queued_songs.append(queue_song_info)
 
     # Flag if the host is playing a song that was never in the Mixify queue
     if not current_song and current_spotify_track_playing is not None:
