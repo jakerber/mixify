@@ -1,7 +1,6 @@
 """PostgreSQL database transation module."""
 import typing
 
-import errors
 from db import connection
 
 
@@ -44,4 +43,4 @@ def _commit_transaction() -> None:
     try:
         connection.SQL.session.commit()  # pylint: disable=no-member
     except Exception as error:
-        raise errors.DatabaseError(f'{str(error)}')
+        raise RuntimeError(f'{str(error)}') from error

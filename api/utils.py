@@ -1,32 +1,72 @@
+"""Mixify API utility function module."""
 import random
 from db import models
+from api import spotify
 
-QUEUE_CODE_DIGIT_OPTIONS = 'abcdefghjkmnpqrstuvwxyz123456789'
-
-
-def generate_queue_code():
-    queue_code = ''
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    queue_code += '-'
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    queue_code += QUEUE_CODE_DIGIT_OPTIONS[random.randint(0, len(QUEUE_CODE_DIGIT_OPTIONS) - 1)]
-    return queue_code
+QUEUE_NAME_CHAR_OPTIONS = 'abcdefghijklmnopqrstuvwxyz123456789'
+QUEUE_NAME_LENGTH = 6
 
 
-def populate_queue_with_tracks(queue: models.Queues) -> list:
+def generate_random_queue_name():
+    """Generate a random name for a Mixify queue.
+
+    :return: queue name
+    """
+    queue_name = ''
+    for _ in range(QUEUE_NAME_LENGTH):
+        queue_name += QUEUE_NAME_CHAR_OPTIONS[random.randint(0, len(QUEUE_NAME_CHAR_OPTIONS) - 1)]
+    return queue_name
+
+
+def get_queue_with_tracks(queue: models.Queues) -> list:
+    """Fetches the current Mixify queue with playback info.
+
+    :param queue: Mixify queue object
+    :return: queue object with playback info
+    """
     queue_info = queue.as_dict()
-    queue_info['tracks'] = []
-    for queue_track in models.QueueTracks.query.filter_by(
-            queue_id=queue.id, played_on_utc=None).all():
-        queue_track_info = queue_track.as_dict()
-        queue_track_info['upvotes'] = [
-            queue_track_upvote.upvoted_by_visitor_id
-            for queue_track_upvote in models.QueueTrackUpvotes.query.filter_by(
-                queue_track_id=queue_track.id).all()]
-        queue_info['tracks'].append(queue_track_info)
+    queued_songs: list[dict] = []
+    played_songs: list[dict] = []
+    current_song = {}
+    playing_unrecognized_song = False
 
-    queue_info['tracks'].sort(key=lambda t: len(t['upvotes']), reverse=True)
+    # Fetch Spotify playback info of host
+    playback_info = spotify.get_playback_info(queue.spotify_access_token)
+    current_spotify_track_playing: str | None = playback_info['current_track']
+    current_spotify_queue_track_ids = set(playback_info['queue'])
+
+    # Fetch all songs in the Mixify queue
+    # Handle newest song first to accurately identify currently playing entry
+    queue_songs: list[models.QueueSongs] = models.QueueSongs.query.filter_by(
+        queue_id=queue.id).all()
+    queue_songs.sort(key=lambda t: t.added_on_utc, reverse=True)
+
+    # Break songs in the Mixify queue into playback state buckets
+    for queue_song in queue_songs:
+        queue_song_info = queue_song.as_dict()
+        queue_song_info['upvotes']: list[str] = [
+            queue_song_upvote.upvoted_by_fpjs_visitor_id
+            for queue_song_upvote in models.QueueSongUpvotes.query.filter_by(
+                queue_song_id=queue_song.id).all()]
+        if not current_song and queue_song.spotify_track_id == current_spotify_track_playing:
+            current_song = queue_song_info
+        elif (queue_song.added_to_spotify_queue_on_utc is not None
+              and queue_song.spotify_track_id not in current_spotify_queue_track_ids):
+            played_songs.append(queue_song_info)
+        else:
+            queued_songs.append(queue_song_info)
+
+    # Flag if the host is playing a song that was never in the Mixify queue
+    if not current_song and current_spotify_track_playing is not None:
+        playing_unrecognized_song = True
+
+    # Sort buckets for frontend queue display
+    queued_songs.sort(key=lambda t: (
+        t['added_to_spotify_queue_on_utc'] is None, 1 - len(t['upvotes']), t['added_on_utc']))
+    played_songs.sort(key=lambda t: t['added_to_spotify_queue_on_utc'], reverse=True)
+    queue_info['queued_songs'] = queued_songs
+    queue_info['played_songs'] = played_songs
+    queue_info['current_song'] = current_song
+    queue_info['playing_unrecognized_song'] = playing_unrecognized_song
+
     return queue_info

@@ -50,45 +50,48 @@ class Queues(BaseModel):
     __tablename__ = 'queues'
 
     id: uuid.UUID = SQL.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    code: str = SQL.Column(SQL.Text, nullable=False)
-    access_token: str = SQL.Column(SQL.Text, nullable=False)
-    started_by_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+    name: str = SQL.Column(SQL.Text, nullable=False)
+    spotify_user_id: str = SQL.Column(SQL.Text, nullable=False)
+    spotify_access_token: str = SQL.Column(SQL.Text, nullable=False)
+    started_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
     started_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
+    paused_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
     ended_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
 
 
-class QueueTracks(BaseModel):
-    """Table of tracks in Mixify queues."""
+class QueueSongs(BaseModel):
+    """Table of songs in Mixify queues."""
 
-    __tablename__ = 'queue_tracks'
+    __tablename__ = 'queue_songs'
 
     id: uuid.UUID = SQL.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     queue_id: str = SQL.Column(UUID(as_uuid=True), SQL.ForeignKey(Queues.id), nullable=False)
-    track_id: str = SQL.Column(SQL.Text, nullable=False)
-    track_name: str = SQL.Column(SQL.Text, nullable=False)
-    track_artist: str = SQL.Column(SQL.Text, nullable=False)
-    track_album_cover_url: str = SQL.Column(SQL.Text, nullable=False)
-    track_length: str = SQL.Column(SQL.Text, nullable=False)
-    added_by_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+    name: str = SQL.Column(SQL.Text, nullable=False)
+    artist: str = SQL.Column(SQL.Text, nullable=False)
+    album_cover_url: str = SQL.Column(SQL.Text, nullable=False)
+    duration_ms: int = SQL.Column(SQL.Integer, nullable=False)
+    spotify_track_id: str = SQL.Column(SQL.Text, nullable=False)
+    spotify_track_uri: str = SQL.Column(SQL.Text, nullable=False)
+    added_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
     added_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
-    played_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
+    added_to_spotify_queue_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
 
     queue: Queues = SQL.relationship('Queues')
 
 
-class QueueTrackUpvotes(BaseModel):
-    """Table of upvotes on tracks in Mixify queues."""
+class QueueSongUpvotes(BaseModel):
+    """Table of upvotes on songs in Mixify queues."""
 
-    __tablename__ = 'queue_track_upvotes'
+    __tablename__ = 'queue_song_upvotes'
 
     id: uuid.UUID = SQL.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    queue_track_id: str = SQL.Column(
-        UUID(as_uuid=True), SQL.ForeignKey(QueueTracks.id), nullable=False)
-    upvoted_by_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+    queue_song_id: str = SQL.Column(
+        UUID(as_uuid=True), SQL.ForeignKey(QueueSongs.id), nullable=False)
+    upvoted_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
     upvoted_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
 
     __table_args__ = (
-        SQL.UniqueConstraint('queue_track_id', 'upvoted_by_visitor_id'),
+        SQL.UniqueConstraint('queue_song_id', 'upvoted_by_fpjs_visitor_id'),
     )
 
-    queue_track: QueueTracks = SQL.relationship('QueueTracks')
+    queue_song: QueueSongs = SQL.relationship('QueueSongs')

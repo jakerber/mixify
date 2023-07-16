@@ -5,7 +5,7 @@ except KeyError as error:
     raise RuntimeError(f'missing environment variable: {str(error)}') from error
 import flask
 import flask_cors
-from api import endpoints
+from api import router
 from db import connection as db_connection
 
 # Initialize Flask app
@@ -17,7 +17,7 @@ flask_cors.CORS(app)
 db_connection.connect_to_db(app)
 
 # Route endpoints
-endpoints.route(app)
+router.route(app)
 
 if __name__ == '__main__':
     app.run()
