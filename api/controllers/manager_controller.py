@@ -26,19 +26,25 @@ def manage_active_queues(token: str) -> dict:
 
         # Fetch current queue and song playing
         track_ids_in_spotify_queue = []
+        current_playing_track_id: str | None = None
         try:
-            track_ids_in_spotify_queue = spotify.get_playback_info(
-                active_queue.spotify_access_token)['queue']
+            playback_info = spotify.get_playback_info(active_queue.spotify_access_token)
+            track_ids_in_spotify_queue = playback_info['queue']
+            current_playing_track_id = playback_info['current_track']
         except Exception:  # pylint: disable=broad-except
             continue  # access token expired
 
-        # Determine the song last added to the Spotify queue by Mixify
+        # Determine the unplayed song last added to the Spotify queue by Mixify
         last_queued_track_id: str | None = None
         last_queued_on: datetime.datetime | None = None
         for queue_song in active_queue_songs:
+            if current_playing_track_id and queue_song.spotify_track_id == current_playing_track_id:
+                queue_song.played_on_utc = datetime.datetime.utcnow()
+                queue_song.save()
             if queue_song.added_to_spotify_queue_on_utc is None:
                 continue  # not played yet, skip
-            if last_queued_on is None or queue_song.added_to_spotify_queue_on_utc > last_queued_on:
+            if (last_queued_on is None or queue_song.added_to_spotify_queue_on_utc > last_queued_on
+                    and queue_song.played_on_utc is None):
                 last_queued_track_id = queue_song.spotify_track_id
                 last_queued_on = queue_song.added_to_spotify_queue_on_utc
 
