@@ -93,6 +93,10 @@ def add_song_to_queue(queue_id: str, spotify_track_id: str, fpjs_visitor_id: str
         raise RuntimeError('queue not found')
     if queue.ended_on_utc is not None:
         raise RuntimeError('queue is ended')
+    if models.QueueSongs.query.filter_by(
+            spotify_track_id=spotify_track_id,
+            added_to_spotify_queue_on_utc=None).first() is not None:
+        raise RuntimeError('song already in queue')
     track_info = spotify.get_track(queue.spotify_access_token, spotify_track_id)
     if 'id' not in track_info or track_info['id'] is None:
         raise RuntimeError('Spotify track not found')
@@ -109,32 +113,6 @@ def add_song_to_queue(queue_id: str, spotify_track_id: str, fpjs_visitor_id: str
         added_on_utc=datetime.datetime.utcnow()).save()
 
     return utils.get_queue_with_tracks(queue_track.queue)
-
-
-def add_drake_forever_to_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
-    """Add Forever by Drake to a Mixify queue.
-
-    :param queue_id: ID of Mixify queue
-    :param fpjs_visitor_id: FingerprintJS ID of user who added song to the queue
-    :raises RuntimeError: if queue ID is invalid
-    :return: updated queue with Forever by Drake added
-    """
-    queue: models.Queues = models.Queues.query.filter_by(id=queue_id).first()
-    if queue is None:
-        raise RuntimeError('queue not found')
-
-    # spotify.add_to_queue(queue.access_token, forever_spotify_id)
-    models.QueueSongs(
-        queue_id=queue.id,
-        name='Forever',
-        artist='Drake',
-        album_cover_url='https://i.scdn.co/image/ab67616d0000b2737c22c8b9a5cfe27cd9914c4c',
-        duration_ms=357000,
-        spotify_track_id='6HSqyfGnsHYw9MmIpa9zlZ',
-        spotify_track_uri='spotify:track:6HSqyfGnsHYw9MmIpa9zlZ',
-        added_by_fpjs_visitor_id=fpjs_visitor_id,
-        added_on_utc=datetime.datetime.utcnow()).save()
-    return utils.get_queue_with_tracks(queue)
 
 
 def upvote_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:

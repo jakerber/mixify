@@ -18,9 +18,6 @@ def route(app: flask.Flask):
         '/v1/queue/new/<spotify_access_token>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.create_queue})(_exec_request)
     app.route(
-        '/v1/queue/drake/forever/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.add_drake_forever_to_queue})(_exec_request)
-    app.route(
         '/v1/queue/upvote/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.upvote_song})(_exec_request)
     app.route(
