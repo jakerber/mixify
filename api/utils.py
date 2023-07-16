@@ -48,7 +48,8 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
             queue_song_upvote.upvoted_by_fpjs_visitor_id
             for queue_song_upvote in models.QueueSongUpvotes.query.filter_by(
                 queue_song_id=queue_song.id).all()]
-        if not current_song and queue_song.spotify_track_id == current_spotify_track_playing:
+        if (not current_song and queue_song.spotify_track_id == current_spotify_track_playing
+                and queue_song.added_to_spotify_queue_on_utc is not None):
             current_song = queue_song_info
         elif (queue_song.added_to_spotify_queue_on_utc is not None
               and queue_song.spotify_track_id not in current_spotify_queue_track_ids):
