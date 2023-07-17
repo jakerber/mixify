@@ -43,9 +43,10 @@ def manage_active_queues(token: str) -> dict:
                 queue_song.played_on_utc = datetime.datetime.utcnow()
                 queue_song.save()
             if queue_song.added_to_spotify_queue_on_utc is None:
-                continue  # not played yet, skip
-            if (last_queued_on is None or (queue_song.added_to_spotify_queue_on_utc > last_queued_on
-                                           and queue_song.played_on_utc is None)):
+                continue  # not queued yet, skip
+            if queue_song.played_on_utc is not None:
+                continue  # already played, skip
+            if last_queued_on is None or queue_song.added_to_spotify_queue_on_utc > last_queued_on:
                 last_queued_track_id = queue_song.spotify_track_id
                 last_queued_on = queue_song.added_to_spotify_queue_on_utc
 
