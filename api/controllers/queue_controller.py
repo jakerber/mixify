@@ -99,7 +99,7 @@ def add_song_to_queue(queue_id: str, spotify_track_id: str, fpjs_visitor_id: str
     if queue.ended_on_utc is not None:
         raise RuntimeError('queue is ended')
     if models.QueueSongs.query.filter_by(
-            spotify_track_id=spotify_track_id,
+            queue_id=queue_id, spotify_track_id=spotify_track_id,
             added_to_spotify_queue_on_utc=None).first() is not None:
         raise RuntimeError('song already in queue')
     track_info = spotify.get_track(queue.spotify_access_token, spotify_track_id)
