@@ -4,7 +4,7 @@ import random
 from db import models
 from api import spotify
 
-QUEUE_NAME_CHAR_OPTIONS = 'abcdefghijklmnopqrstuvwxyz123456789'
+QUEUE_NAME_CHAR_OPTIONS = 'abcdefghjklmnopqrstuvwxyz123456789'
 QUEUE_NAME_LENGTH = 6
 
 
