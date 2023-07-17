@@ -1,10 +1,9 @@
 """Queue API controller module."""
+import config
 import datetime
 from api import spotify
 from api import utils
 from db import models
-
-_MAX_SEARCH_RESULTS = 10
 
 
 def fetch_queue(queue_name: str) -> dict:
@@ -66,7 +65,7 @@ def search_tracks(queue_id: str, search_query: str) -> dict:
 
     search_results_info: list[dict] = []
     for index, result in enumerate(spotify.search(queue.spotify_access_token, search_query)):
-        if index == _MAX_SEARCH_RESULTS:
+        if index == config.MAX_SEARCH_RESULTS:
             break
         search_results_info.append({
             'track_id': result['id'],
