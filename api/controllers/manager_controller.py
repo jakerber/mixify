@@ -20,7 +20,8 @@ def manage_active_queues(token: str) -> dict:
         active_queue_songs = models.QueueSongs.query.filter_by(queue_id=active_queue.id).all()
         unplayed_queue_songs = [
             queue_song for queue_song in active_queue_songs
-            if queue_song.added_to_spotify_queue_on_utc is None]
+            if (queue_song.added_to_spotify_queue_on_utc is None
+                and queue_song.played_on_utc is None)]
         if len(unplayed_queue_songs) == 0:
             continue  # no songs to queue, skip
 
@@ -43,8 +44,8 @@ def manage_active_queues(token: str) -> dict:
                 queue_song.save()
             if queue_song.added_to_spotify_queue_on_utc is None:
                 continue  # not played yet, skip
-            if (last_queued_on is None or queue_song.added_to_spotify_queue_on_utc > last_queued_on
-                    and queue_song.played_on_utc is None):
+            if (last_queued_on is None or (queue_song.added_to_spotify_queue_on_utc > last_queued_on
+                                           and queue_song.played_on_utc is None)):
                 last_queued_track_id = queue_song.spotify_track_id
                 last_queued_on = queue_song.added_to_spotify_queue_on_utc
 
