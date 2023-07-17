@@ -43,8 +43,13 @@ def create_queue(spotify_access_token: str, fpjs_visitor_id: str) -> dict:
         active_queue.save()
         return active_queue.as_dict()
 
+    # Generate unique queue name
+    queue_name = ''
+    while not queue_name or models.Queues.query.filter_by(name=queue_name).first() is not None:
+        queue_name = utils.generate_random_queue_name()
+
     new_queue = models.Queues(
-        name=utils.generate_random_queue_name(),
+        name=queue_name,
         spotify_user_id=user['id'],
         spotify_access_token=spotify_access_token,
         started_by_fpjs_visitor_id=fpjs_visitor_id,
