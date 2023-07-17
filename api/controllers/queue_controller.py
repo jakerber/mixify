@@ -39,6 +39,7 @@ def create_queue(spotify_access_token: str, fpjs_visitor_id: str) -> dict:
         spotify_user_id=user['id'], ended_on_utc=None).first()
     if active_queue is not None:
         active_queue.spotify_access_token = spotify_access_token  # refresh access token
+        active_queue.started_by_fpjs_visitor_id = fpjs_visitor_id  # refresh ownership
         active_queue.save()
         return active_queue.as_dict()
 
