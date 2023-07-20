@@ -59,6 +59,24 @@ class Queues(BaseModel):
     ended_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
 
 
+class QueueSubscribers(BaseModel):
+    """Table of subscribers to Mixify queue."""
+
+    __tablename__ = 'queue_subscribers'
+
+    id: uuid.UUID = SQL.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    queue_id: str = SQL.Column(UUID(as_uuid=True), SQL.ForeignKey(Queues.id), nullable=False)
+    spotify_access_token: str = SQL.Column(SQL.Text, nullable=False)
+    fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+    subscribed_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
+
+    __table_args__ = (
+        SQL.UniqueConstraint('queue_id', 'spotify_access_token'),
+    )
+
+    queue: Queues = SQL.relationship('Queues')
+
+
 class QueueSongs(BaseModel):
     """Table of songs in Mixify queues."""
 

@@ -211,3 +211,49 @@ def unpause_queue(queue_id: str) -> dict:
     queue.paused_on_utc = None
     queue.save()
     return utils.get_queue_with_tracks(queue)
+
+
+def subscribe_to_queue(queue_id: str, spotify_access_token: str, fpjs_visitor_id: str) -> dict:
+    """Subscribe to a Mixify queue.
+
+    :param queue_id: queue ID
+    :param spotify_access_token: Spotify access token of subscriber
+    :param fpjs_visitor_id: FingerprintJS visitor ID of subscriber
+    :return: queue object
+    """
+    queue: models.Queues = models.Queues.query.filter_by(id=queue_id).first()
+    if queue is None:
+        raise RuntimeError('queue not found')
+    existing_subscriber: models.QueueSubscribers = models.QueueSubscribers.query.filter_by(
+        queue_id=queue.id, spotify_access_token=spotify_access_token).first()
+    if existing_subscriber is not None:
+        existing_subscriber.fpjs_visitor_id = fpjs_visitor_id
+        existing_subscriber.save()
+        return queue.as_dict()
+
+    models.QueueSubscribers(
+        queue_id=queue_id,
+        spotify_access_token=spotify_access_token,
+        fpjs_visitor_id=fpjs_visitor_id,
+        subscribed_on_utc=datetime.datetime.utcnow()).save()
+    return queue.as_dict()
+
+
+def unsubscribe_from_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
+    """Unsubscribe from a Mixify queue.
+
+    :param queue_id: queue ID
+    :param spotify_access_token: Spotify access token of subscriber
+    :param fpjs_visitor_id: FingerprintJS visitor ID of subscriber
+    :return: empty object
+    """
+    queue: models.Queues = models.Queues.query.filter_by(id=queue_id).first()
+    if queue is None:
+        raise RuntimeError('queue not found')
+    subscriber: models.QueueSubscribers = models.QueueSubscribers.query.filter_by(
+        queue_id=queue.id, fpjs_visitor_id=fpjs_visitor_id).first()
+    if subscriber is None:
+        raise RuntimeError('subscriber not found')
+
+    subscriber.delete()
+    return utils.get_queue_with_tracks(queue)

@@ -1,5 +1,6 @@
 """Queue Manager API controller module."""
 import datetime
+import time
 import config
 from api import spotify
 from db import models
@@ -74,6 +75,14 @@ def manage_active_queues(token: str) -> dict:
             top_song.added_to_spotify_queue_on_utc = datetime.datetime.utcnow()
             top_song.save()
             songs_queued_on_spotify[active_queue.name] = top_song.name
+
+        # Add the next song to all subscribers Spotify queues
+        for subscriber in models.QueueSubscribers.query.filter_by(queue_id=active_queue.id).all():
+            time.sleep(0.1)  # throttle to avoid rate limit
+            try:
+                spotify.add_to_queue(subscriber.spotify_access_token, top_song.spotify_track_uri)
+            except Exception:  # pylint: disable=broad-except
+                pass  # Subscriber has no devices active.
 
     print({'queued_songs': songs_queued_on_spotify})  # easy debugging :)
 

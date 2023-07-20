@@ -39,6 +39,13 @@ def route(app: flask.Flask):
         '/v1/queue/unpause/<queue_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.unpause_queue})(_exec_request)
     app.route(
+        '/v1/queue/subscribe/<queue_id>/<spotify_access_token>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.subscribe_to_queue})(_exec_request)
+    app.route(
+        '/v1/queue/unsubscribe/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.unsubscribe_from_queue})(_exec_request)
+
+    app.route(
         '/v1/manager/<token>', methods=['GET'],
         defaults={'endpoint_func': manager_controller.manage_active_queues})(_exec_request)
 

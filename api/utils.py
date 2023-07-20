@@ -65,6 +65,11 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
             if queue_song.played_on_utc is None:
                 queued_songs.append(queue_song_info)
 
+    # Append queue subscribers
+    queue_info['subscribers'] = [
+        subscriber.as_dict() for subscriber in models.QueueSubscribers.query.filter_by(
+            queue_id=queue.id).all()]
+
     # Flag if the host is playing a song that was never in the Mixify queue
     if not current_song and current_spotify_track_playing is not None:
         playing_unrecognized_song = True
