@@ -94,6 +94,7 @@ class QueueSongs(BaseModel):
     added_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
     added_to_spotify_queue_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
     played_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
+    boosted_by_fpjs_visitor_id: str | None = SQL.Column(SQL.Text)
 
     queue: Queues = SQL.relationship('Queues')
 

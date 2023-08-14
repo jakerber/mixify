@@ -24,6 +24,9 @@ def route(app: flask.Flask):
         '/v1/queue/upvote/remove/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.remove_song_upvote})(_exec_request)
     app.route(
+        '/v1/queue/boost/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.boost_song})(_exec_request)
+    app.route(
         '/v1/search/<queue_id>/<search_query>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.search_tracks})(_exec_request)
     app.route(

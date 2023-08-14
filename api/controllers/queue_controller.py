@@ -257,3 +257,30 @@ def unsubscribe_from_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
 
     subscriber.delete()
     return utils.get_queue_with_tracks(queue)
+
+
+def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
+    """Immedately queue an unplayed song in a Mixify queue.
+
+    :param queue_song_id: queue song ID
+    :param fpjs_visitor_id: FingerprintJS visitor ID
+    :raises RuntimeError: if queue song ID is invalid or already queued on Spotify
+    :return: updated queue with boosted song
+    """
+    queue_song: models.QueueSongs = models.QueueSongs.query.filter_by(id=queue_song_id).first()
+    if queue_song is None:
+        raise RuntimeError('queue song not found')
+    if queue_song.added_to_spotify_queue_on_utc is not None:
+        raise RuntimeError('song already queued on Spotify')
+
+    # Queue the song on the host's Spotify
+    try:
+        spotify.add_to_queue(queue_song.queue.spotify_access_token, queue_song.spotify_track_uri)
+    except Exception as error:  # pylint: disable=broad-except
+        raise RuntimeError(f'unable to queue song: {str(error)}') from error
+    else:
+        queue_song.added_to_spotify_queue_on_utc = datetime.datetime.utcnow()
+        queue_song.boosted_by_fpjs_visitor_id = fpjs_visitor_id
+        queue_song.save()
+
+    return utils.get_queue_with_tracks(queue_song.queue)
