@@ -28,6 +28,7 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
     queue_info = queue.as_dict()
     queued_songs: list[dict] = []
     played_songs: list[dict] = []
+    current_utc = datetime.datetime.utcnow()
 
     # Fetch Spotify playback info of host
     playback_info = spotify.get_playback_info(queue.spotify_access_token)
@@ -49,7 +50,7 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
                 queue_song_id=queue_song.id).all()]
         if (queue_song.spotify_track_id == current_spotify_track_playing
                 and queue_song.added_to_spotify_queue_on_utc is not None):
-            queue_song.played_on_utc = datetime.datetime.utcnow()
+            queue_song.played_on_utc = current_utc
             queue_song.save()
         elif (queue_song.added_to_spotify_queue_on_utc is not None
               and queue_song.spotify_track_id not in current_spotify_queue_track_ids):
@@ -69,7 +70,7 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
 
     # Sort buckets for frontend queue display
     queued_songs.sort(key=lambda t: (
-        t['added_to_spotify_queue_on_utc'] or datetime.datetime.utcnow(),
+        t['added_to_spotify_queue_on_utc'] or current_utc,
         1 - len(t['upvotes']),
         t['added_on_utc']))
     played_songs.sort(key=lambda t: t['added_to_spotify_queue_on_utc'], reverse=True)
