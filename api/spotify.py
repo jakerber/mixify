@@ -41,6 +41,7 @@ def get_playback_info(access_token: str) -> dict:
                         else current_playback['currently_playing']['id'])
     return {
         'current_track': current_track_id,
+        'currently_playing': current_playback['currently_playing'],
         'queue': [track['id'] for track in current_playback['queue']]}
 
 

@@ -29,7 +29,6 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
     queued_songs: list[dict] = []
     played_songs: list[dict] = []
     current_song = {}
-    playing_unrecognized_song = False
 
     # Fetch Spotify playback info of host
     playback_info = spotify.get_playback_info(queue.spotify_access_token)
@@ -70,10 +69,6 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
         subscriber.as_dict() for subscriber in models.QueueSubscribers.query.filter_by(
             queue_id=queue.id).all()]
 
-    # Flag if the host is playing a song that was never in the Mixify queue
-    if not current_song and current_spotify_track_playing is not None:
-        playing_unrecognized_song = True
-
     # Sort buckets for frontend queue display
     queued_songs.sort(key=lambda t: (
         t['added_to_spotify_queue_on_utc'] is None, 1 - len(t['upvotes']), t['added_on_utc']))
@@ -81,6 +76,13 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
     queue_info['queued_songs'] = queued_songs
     queue_info['played_songs'] = played_songs
     queue_info['current_song'] = current_song
-    queue_info['playing_unrecognized_song'] = playing_unrecognized_song
+    queue_info['currently_playing'] = None
+    if playback_info['currently_playing'] is not None:
+        queue_info['currently_playing'] = {
+            'name': playback_info['currently_playing']['name'],
+            'artist': ', '.join(
+                [artist['name'] for artist in playback_info['currently_playing']['artists']]),
+            'album_cover_url': playback_info[
+                'currently_playing']['album']['images'][0]['url']}
 
     return queue_info
