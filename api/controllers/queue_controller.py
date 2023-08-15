@@ -1,6 +1,7 @@
 """Queue API controller module."""
 import config
 import datetime
+from api import payments
 from api import spotify
 from api import utils
 from db import models
@@ -277,6 +278,12 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
     if queue_song.queue.ended_on_utc is not None:
         raise RuntimeError('queue is ended')
 
+    # Create Stripe payment intent for the boost
+    try:
+        stripe_client_secret = payments.create_boost_payment()
+    except Exception as error:  # pylint: disable=broad-except
+        raise RuntimeError(f'unable to process stripe payment: {str(error)}') from error
+
     # Queue the song on the host's Spotify
     try:
         spotify.add_to_queue(queue_song.queue.spotify_access_token, queue_song.spotify_track_uri)
@@ -287,4 +294,6 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         queue_song.boosted_by_fpjs_visitor_id = fpjs_visitor_id
         queue_song.save()
 
-    return utils.get_queue_with_tracks(queue_song.queue)
+    queue_info = utils.get_queue_with_tracks(queue_song.queue)
+    queue_info['stripe_client_secret'] = stripe_client_secret
+    return queue_info
