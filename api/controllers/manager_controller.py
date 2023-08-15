@@ -68,6 +68,7 @@ def manage_active_queues(token: str) -> dict:
                 top_song_upvotes = song_upvotes
 
         # Add the next song to Spotify queue
+        time.sleep(0.1)  # throttle to avoid rate limit
         try:
             spotify.add_to_queue(active_queue.spotify_access_token, top_song.spotify_track_uri)
         except Exception:  # pylint: disable=broad-except
