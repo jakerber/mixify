@@ -285,7 +285,8 @@ def create_boost_payment(queue_song_id: str, fpjs_visitor_id: str) -> dict:
 
     # Create Stripe payment intent for the boost
     try:
-        stripe_client_secret = payments.create_boost_payment(config.BOOST_COST_USD, fpjs_visitor_id)
+        stripe_client_secret = payments.create_boost_payment(
+            config.BOOST_COST_USD, queue_song_id, fpjs_visitor_id)
     except Exception as error:  # pylint: disable=broad-except
         raise RuntimeError(f'unable to create stripe payment: {str(error)}') from error
 
