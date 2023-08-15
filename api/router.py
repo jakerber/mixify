@@ -53,9 +53,6 @@ def route(app: flask.Flask):
 
     # Boosting
     app.route(
-        '/v1/queue/boost/payment/<queue_song_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.create_boost_payment})(_exec_request)
-    app.route(
         '/v1/queue/boost/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.boost_song})(_exec_request)
 
