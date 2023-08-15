@@ -50,7 +50,7 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
                 spotify_access_token=queue.spotify_access_token).all():
             for queue_boost in models.QueueSongBoosts.query.filter_by(
                     queue_id=users_queue.id).all():
-                balance += queue_boost.cost_usd
+                balance += float(queue_boost.cost_usd)
     queue_info['balance'] = balance
 
     # Break songs in the Mixify queue into playback state buckets
