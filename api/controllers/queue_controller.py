@@ -272,6 +272,10 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError('queue song not found')
     if queue_song.added_to_spotify_queue_on_utc is not None:
         raise RuntimeError('song already queued on Spotify')
+    if queue_song.queue.paused_on_utc is not None:
+        raise RuntimeError('queue is paused')
+    if queue_song.queue.ended_on_utc is not None:
+        raise RuntimeError('queue is ended')
 
     # Queue the song on the host's Spotify
     try:
