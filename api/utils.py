@@ -44,6 +44,8 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
     # Break songs in the Mixify queue into playback state buckets
     for queue_song in queue_songs:
         queue_song_info = queue_song.as_dict()
+        queue_song_info['boosted'] = (
+            models.QueueSongBoosts.query.filter_by(queue_song_id=queue_song.id).first() is not None)
         queue_song_info['upvotes']: list[str] = [
             queue_song_upvote.upvoted_by_fpjs_visitor_id
             for queue_song_upvote in models.QueueSongUpvotes.query.filter_by(

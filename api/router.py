@@ -18,21 +18,6 @@ def route(app: flask.Flask):
         '/v1/queue/new/<spotify_access_token>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.create_queue})(_exec_request)
     app.route(
-        '/v1/queue/upvote/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.upvote_song})(_exec_request)
-    app.route(
-        '/v1/queue/upvote/remove/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.remove_song_upvote})(_exec_request)
-    app.route(
-        '/v1/queue/boost/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.boost_song})(_exec_request)
-    app.route(
-        '/v1/search/<queue_id>/<search_query>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.search_tracks})(_exec_request)
-    app.route(
-        '/v1/queue/add/<queue_id>/<spotify_track_id>/<fpjs_visitor_id>', methods=['GET'],
-        defaults={'endpoint_func': queue_controller.add_song_to_queue})(_exec_request)
-    app.route(
         '/v1/queue/end/<queue_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.end_queue})(_exec_request)
     app.route(
@@ -41,6 +26,24 @@ def route(app: flask.Flask):
     app.route(
         '/v1/queue/unpause/<queue_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.unpause_queue})(_exec_request)
+
+    # Voting
+    app.route(
+        '/v1/queue/upvote/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.upvote_song})(_exec_request)
+    app.route(
+        '/v1/queue/upvote/remove/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.remove_song_upvote})(_exec_request)
+
+    # Searching
+    app.route(
+        '/v1/search/<queue_id>/<search_query>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.search_tracks})(_exec_request)
+    app.route(
+        '/v1/queue/add/<queue_id>/<spotify_track_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.add_song_to_queue})(_exec_request)
+
+    # Subscribing
     app.route(
         '/v1/queue/subscribe/<queue_id>/<spotify_access_token>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.subscribe_to_queue})(_exec_request)
@@ -48,6 +51,15 @@ def route(app: flask.Flask):
         '/v1/queue/unsubscribe/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.unsubscribe_from_queue})(_exec_request)
 
+    # Boosting
+    app.route(
+        '/v1/queue/boost/payment/<queue_song_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.create_boost_payment})(_exec_request)
+    app.route(
+        '/v1/queue/boost/<queue_song_id>/<fpjs_visitor_id>', methods=['GET'],
+        defaults={'endpoint_func': queue_controller.boost_song})(_exec_request)
+
+    # Managing
     app.route(
         '/v1/manager/<token>', methods=['GET'],
         defaults={'endpoint_func': manager_controller.manage_active_queues})(_exec_request)

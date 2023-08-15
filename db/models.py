@@ -94,7 +94,6 @@ class QueueSongs(BaseModel):
     added_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
     added_to_spotify_queue_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
     played_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
-    boosted_by_fpjs_visitor_id: str | None = SQL.Column(SQL.Text)
 
     queue: Queues = SQL.relationship('Queues')
 
@@ -114,4 +113,19 @@ class QueueSongUpvotes(BaseModel):
         SQL.UniqueConstraint('queue_song_id', 'upvoted_by_fpjs_visitor_id'),
     )
 
+    queue_song: QueueSongs = SQL.relationship('QueueSongs')
+
+
+class QueueSongBoosts(BaseModel):
+    """Table of boosts for songs in Mixify queues."""
+
+    __tablename__ = 'queue_song_boosts'
+
+    id: uuid.UUID = SQL.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    queue_id: str = SQL.Column(UUID(as_uuid=True), SQL.ForeignKey(Queues.id), nullable=False)
+    queue_song_id: str = SQL.Column(
+        UUID(as_uuid=True), SQL.ForeignKey(QueueSongs.id), nullable=False)
+    boosted_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+
+    queue: Queues = SQL.relationship('Queues')
     queue_song: QueueSongs = SQL.relationship('QueueSongs')

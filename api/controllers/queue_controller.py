@@ -260,6 +260,30 @@ def unsubscribe_from_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
     return utils.get_queue_with_tracks(queue)
 
 
+def create_boost_payment(queue_song_id: str) -> dict:
+    """Create the Stripe payment intent to boost a song in a Mixify queue.
+
+    :param queue_song_id: queue song ID
+    :raises RuntimeError: if queue song ID is invalid or already queued on Spotify
+    :return: dict with payment intent client secret
+    """
+    queue_song: models.QueueSongs = models.QueueSongs.query.filter_by(id=queue_song_id).first()
+    if queue_song is None:
+        raise RuntimeError('queue song not found')
+    if queue_song.added_to_spotify_queue_on_utc is not None:
+        raise RuntimeError('song already queued on Spotify')
+    if queue_song.queue.paused_on_utc is not None:
+        raise RuntimeError('queue is paused')
+    if queue_song.queue.ended_on_utc is not None:
+        raise RuntimeError('queue is ended')
+
+    # Create Stripe payment intent for the boost
+    try:
+        return {'stripe_client_secret': payments.create_boost_payment()}
+    except Exception as error:  # pylint: disable=broad-except
+        raise RuntimeError(f'unable to process stripe payment: {str(error)}') from error
+
+
 def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
     """Immedately queue an unplayed song in a Mixify queue.
 
@@ -278,12 +302,6 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
     if queue_song.queue.ended_on_utc is not None:
         raise RuntimeError('queue is ended')
 
-    # Create Stripe payment intent for the boost
-    try:
-        stripe_client_secret = payments.create_boost_payment()
-    except Exception as error:  # pylint: disable=broad-except
-        raise RuntimeError(f'unable to process stripe payment: {str(error)}') from error
-
     # Queue the song on the host's Spotify
     try:
         spotify.add_to_queue(queue_song.queue.spotify_access_token, queue_song.spotify_track_uri)
@@ -291,9 +309,12 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError(f'unable to queue song: {str(error)}') from error
     else:
         queue_song.added_to_spotify_queue_on_utc = datetime.datetime.utcnow()
-        queue_song.boosted_by_fpjs_visitor_id = fpjs_visitor_id
         queue_song.save()
 
-    queue_info = utils.get_queue_with_tracks(queue_song.queue)
-    queue_info['stripe_client_secret'] = stripe_client_secret
-    return queue_info
+        # Record new boost for host payout
+        models.QueueSongBoosts(
+            queue_id=queue_song.queue.id,
+            queue_song_id=queue_song.id,
+            boosted_by_fpjs_visitor_id=fpjs_visitor_id).save()
+
+    return utils.get_queue_with_tracks(queue_song.queue)
