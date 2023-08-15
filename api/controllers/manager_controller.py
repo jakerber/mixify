@@ -40,7 +40,8 @@ def manage_active_queues(token: str) -> dict:
         last_queued_track_id: str | None = None
         last_queued_on: datetime.datetime | None = None
         for queue_song in active_queue_songs:
-            if current_playing_track_id and queue_song.spotify_track_id == current_playing_track_id:
+            if (current_playing_track_id and queue_song.spotify_track_id == current_playing_track_id
+                    and queue_song.added_to_spotify_queue_on_utc is not None):
                 queue_song.played_on_utc = datetime.datetime.utcnow()
                 queue_song.save()
             if queue_song.added_to_spotify_queue_on_utc is None:
