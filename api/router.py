@@ -12,19 +12,19 @@ def route(app: flask.Flask):
     :param app: Flask app instance
     """
     app.route(
-        '/v1/queue/<queue_name>', methods=['GET'],
+        '/v1/queue/<queue_name>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.fetch_queue})(_exec_request)
     app.route(
         '/v1/queue/new/<spotify_access_token>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.create_queue})(_exec_request)
     app.route(
-        '/v1/queue/end/<queue_id>', methods=['GET'],
+        '/v1/queue/end/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.end_queue})(_exec_request)
     app.route(
-        '/v1/queue/pause/<queue_id>', methods=['GET'],
+        '/v1/queue/pause/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.pause_queue})(_exec_request)
     app.route(
-        '/v1/queue/unpause/<queue_id>', methods=['GET'],
+        '/v1/queue/unpause/<queue_id>/<fpjs_visitor_id>', methods=['GET'],
         defaults={'endpoint_func': queue_controller.unpause_queue})(_exec_request)
 
     # Voting

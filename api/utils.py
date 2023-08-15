@@ -19,10 +19,11 @@ def generate_random_queue_name():
     return queue_name
 
 
-def get_queue_with_tracks(queue: models.Queues) -> list:
+def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
     """Fetches the current Mixify queue with playback info.
 
     :param queue: Mixify queue object
+    :param fpjs_visitor_id: FingerprintJS visitor ID for balance calculation
     :return: queue object with playback info
     """
     queue_info = queue.as_dict()
@@ -40,6 +41,17 @@ def get_queue_with_tracks(queue: models.Queues) -> list:
     queue_songs: list[models.QueueSongs] = models.QueueSongs.query.filter_by(
         queue_id=queue.id).all()
     queue_songs.sort(key=lambda t: t.added_on_utc, reverse=True)
+
+    # If the current user is the queue creator, add a balance for them
+    balance: float | None = None
+    if queue.started_by_fpjs_visitor_id == fpjs_visitor_id:
+        balance = 0.0
+        for users_queue in models.Queues.query.filter_by(
+                spotify_access_token=queue.spotify_access_token).all():
+            for queue_boost in models.QueueSongBoosts.query.filter_by(
+                    queue_id=users_queue.id).all():
+                balance += queue_boost.cost_usd
+    queue_info['balance'] = balance
 
     # Break songs in the Mixify queue into playback state buckets
     for queue_song in queue_songs:

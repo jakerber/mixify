@@ -7,7 +7,7 @@ from api import utils
 from db import models
 
 
-def fetch_queue(queue_name: str) -> dict:
+def fetch_queue(queue_name: str, fpjs_visitor_id: str) -> dict:
     """Fetch a Mixify queue.
 
     :param queue_name: queue name
@@ -20,7 +20,7 @@ def fetch_queue(queue_name: str) -> dict:
     if queue.ended_on_utc is not None:
         raise RuntimeError('queue is ended')
 
-    return utils.get_queue_with_tracks(queue)
+    return utils.get_queue_with_tracks(queue, fpjs_visitor_id)
 
 
 def create_queue(spotify_access_token: str, fpjs_visitor_id: str) -> dict:
@@ -118,7 +118,7 @@ def add_song_to_queue(queue_id: str, spotify_track_id: str, fpjs_visitor_id: str
         added_by_fpjs_visitor_id=fpjs_visitor_id,
         added_on_utc=datetime.datetime.utcnow()).save()
 
-    return utils.get_queue_with_tracks(queue_track.queue)
+    return utils.get_queue_with_tracks(queue_track.queue, fpjs_visitor_id)
 
 
 def upvote_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
@@ -140,7 +140,7 @@ def upvote_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         upvoted_by_fpjs_visitor_id=fpjs_visitor_id,
         upvoted_on_utc=datetime.datetime.utcnow()).save()
 
-    return utils.get_queue_with_tracks(queue_song.queue)
+    return utils.get_queue_with_tracks(queue_song.queue, fpjs_visitor_id)
 
 
 def remove_song_upvote(queue_song_id: str, fpjs_visitor_id: str) -> dict:
@@ -163,29 +163,33 @@ def remove_song_upvote(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError('queue song upvote not found')
     queue_song_upvote.delete()
 
-    return utils.get_queue_with_tracks(queue_song.queue)
+    return utils.get_queue_with_tracks(queue_song.queue, fpjs_visitor_id)
 
 
-def end_queue(queue_id: str) -> dict:
+def end_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
     """End a Mixify queue.
 
     :param queue_id: queue ID
+    :param fpjs_visitor_id: FingerprintJS visitor ID
     :raises RuntimeError: if queue ID is invalid
     :return: empty object
     """
     queue: models.Queues = models.Queues.query.filter_by(id=queue_id).first()
     if queue is None:
         raise RuntimeError('queue not found')
+    if queue.started_by_fpjs_visitor_id != fpjs_visitor_id:
+        raise RuntimeError('user is not starter of queue')
 
     queue.ended_on_utc = datetime.datetime.utcnow()
     queue.save()
     return {}
 
 
-def pause_queue(queue_id: str) -> dict:
+def pause_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
     """Pause a Mixify queue.
 
     :param queue_id: queue ID
+    :param fpjs_visitor_id: FingerprintJS visitor ID
     :raises RuntimeError: if queue ID is invalid
     :return: paused queue object
     """
@@ -195,13 +199,14 @@ def pause_queue(queue_id: str) -> dict:
 
     queue.paused_on_utc = datetime.datetime.utcnow()
     queue.save()
-    return utils.get_queue_with_tracks(queue)
+    return utils.get_queue_with_tracks(queue, fpjs_visitor_id)
 
 
-def unpause_queue(queue_id: str) -> dict:
+def unpause_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
     """Unpause a Mixify queue.
 
     :param queue_id: queue ID
+    :param fpjs_visitor_id: FingerprintJS visitor ID
     :raises RuntimeError: if queue ID is invalid
     :return: unpaused queue object
     """
@@ -211,7 +216,7 @@ def unpause_queue(queue_id: str) -> dict:
 
     queue.paused_on_utc = None
     queue.save()
-    return utils.get_queue_with_tracks(queue)
+    return utils.get_queue_with_tracks(queue, fpjs_visitor_id)
 
 
 def subscribe_to_queue(queue_id: str, spotify_access_token: str, fpjs_visitor_id: str) -> dict:
@@ -257,7 +262,7 @@ def unsubscribe_from_queue(queue_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError('subscriber not found')
 
     subscriber.delete()
-    return utils.get_queue_with_tracks(queue)
+    return utils.get_queue_with_tracks(queue, fpjs_visitor_id)
 
 
 def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
@@ -279,8 +284,9 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError('queue is ended')
 
     # Create Stripe payment intent for the boost
+    boost_cost_usd = config.BOOST_COST_USD
     try:
-        stripe_client_secret = payments.create_boost_payment()
+        stripe_client_secret = payments.create_boost_payment(boost_cost_usd)
     except Exception as error:  # pylint: disable=broad-except
         raise RuntimeError(f'unable to process stripe payment: {str(error)}') from error
 
@@ -297,9 +303,10 @@ def boost_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         models.QueueSongBoosts(
             queue_id=queue_song.queue.id,
             queue_song_id=queue_song.id,
-            boosted_by_fpjs_visitor_id=fpjs_visitor_id).save()
+            boosted_by_fpjs_visitor_id=fpjs_visitor_id,
+            cost_usd=boost_cost_usd).save()
 
     # Return queue with Stripe client secret for payment
-    queue_info = utils.get_queue_with_tracks(queue_song.queue)
+    queue_info = utils.get_queue_with_tracks(queue_song.queue, fpjs_visitor_id)
     queue_info['stripe_client_secret'] = stripe_client_secret
     return queue_info

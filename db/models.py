@@ -126,6 +126,7 @@ class QueueSongBoosts(BaseModel):
     queue_song_id: str = SQL.Column(
         UUID(as_uuid=True), SQL.ForeignKey(QueueSongs.id), nullable=False)
     boosted_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
+    cost_usd: float = SQL.Column(SQL.Numeric, nullable=False)
 
     queue: Queues = SQL.relationship('Queues')
     queue_song: QueueSongs = SQL.relationship('QueueSongs')
