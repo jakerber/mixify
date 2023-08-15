@@ -13,5 +13,7 @@ def create_boost_payment() -> str:
     intent = stripe.PaymentIntent.create(
         amount=99,
         currency='usd',
-        automatic_payment_methods={'enabled': True})
+        automatic_payment_methods={'enabled': True},
+        description='Mixify Boost',
+        statement_descriptor='Mixify Boost')
     return intent.client_secret
