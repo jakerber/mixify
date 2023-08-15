@@ -79,6 +79,8 @@ def manage_active_queues(token: str) -> dict:
 
         # Add the next song to all subscribers Spotify queues
         for subscriber in models.QueueSubscribers.query.filter_by(queue_id=active_queue.id).all():
+            if active_queue.spotify_access_token == subscriber.spotify_access_token:
+                continue  # subcriber is host, skip
             time.sleep(0.1)  # throttle to avoid rate limit
             try:
                 spotify.add_to_queue(subscriber.spotify_access_token, top_song.spotify_track_uri)
