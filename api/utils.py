@@ -1,5 +1,6 @@
 """Mixify API utility function module."""
 import datetime
+import config
 import random
 from db import models
 from api import spotify
@@ -53,7 +54,7 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
             queue_has_boost = False
             for queue_boost in models.QueueSongBoosts.query.filter_by(
                     queue_id=users_queue.id).all():
-                balance += float(queue_boost.cost_usd)
+                balance += float(queue_boost.cost_usd) * (config.BOOST_HOST_PAYOUT_PERCENT / 100)
                 boost_count += 1
                 queue_has_boost = True
             if queue_has_boost is True:

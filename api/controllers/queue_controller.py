@@ -1,6 +1,6 @@
 """Queue API controller module."""
-import config
 import datetime
+import config
 from api import payments
 from api import spotify
 from api import utils
