@@ -35,7 +35,7 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
     # Fetch Spotify playback info of host
     playback_info = spotify.get_playback_info(queue.spotify_access_token)
     current_spotify_track_playing: str | None = playback_info['current_track']
-    current_spotify_queue_track_ids = set(playback_info['queue'])
+    current_spotify_queue_track_ids: list[str] = playback_info['queue']
 
     # Fetch all songs in the Mixify queue
     # Handle newest song first to accurately identify currently playing entry
@@ -87,6 +87,13 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
 
             if queue_song.played_on_utc is None:
                 queued_songs.append(queue_song_info)
+
+                # Ensure a single song in the Spotify queue is not attributed to two songs in the
+                # Mixify queue by removing the ID from the set of current Spotify queue track IDs.
+                if (queue_song.added_to_spotify_queue_on_utc is not None
+                        and queue_song.played_on_utc is None
+                        and queue_song.spotify_track_id in current_spotify_queue_track_ids):
+                    current_spotify_queue_track_ids.remove(queue_song.spotify_track_id)
 
     # Append queue subscribers
     queue_info['subscribers'] = [
