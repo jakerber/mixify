@@ -42,16 +42,26 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
         queue_id=queue.id).all()
     queue_songs.sort(key=lambda t: t.added_on_utc, reverse=True)
 
-    # If the current user is the queue creator, add a balance for them
-    balance: float | None = None
+    # If the current user is the queue creator, add balance info for them
+    queue_info['balance_info'] = None
     if queue.started_by_fpjs_visitor_id == fpjs_visitor_id:
         balance = 0.0
+        queue_count = 0
+        boost_count = 0
         for users_queue in models.Queues.query.filter_by(
                 spotify_access_token=queue.spotify_access_token).all():
+            queue_has_boost = False
             for queue_boost in models.QueueSongBoosts.query.filter_by(
                     queue_id=users_queue.id).all():
                 balance += float(queue_boost.cost_usd)
-    queue_info['balance'] = balance
+                boost_count += 1
+                queue_has_boost = True
+            if queue_has_boost is True:
+                queue_count += 1
+        queue_info['balance_info'] = {
+            'amount': balance,
+            'queue_count': queue_count,
+            'boost_count': boost_count}
 
     # Break songs in the Mixify queue into playback state buckets
     for queue_song in queue_songs:
