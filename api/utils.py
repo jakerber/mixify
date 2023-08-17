@@ -104,7 +104,7 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
     queued_songs.sort(key=lambda t: (
         t['added_to_spotify_queue_on_utc'] or current_utc,
         1 - len(t['upvotes']),
-        t['added_on_utc']))
+        t['first_liked_on_utc'] or t['added_on_utc']))
     played_songs.sort(key=lambda t: t['added_to_spotify_queue_on_utc'], reverse=True)
     queue_info['queued_songs'] = queued_songs
     queue_info['played_songs'] = played_songs

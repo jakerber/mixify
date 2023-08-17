@@ -92,6 +92,7 @@ class QueueSongs(BaseModel):
     spotify_track_uri: str = SQL.Column(SQL.Text, nullable=False)
     added_by_fpjs_visitor_id: str = SQL.Column(SQL.Text, nullable=False)
     added_on_utc: datetime.datetime = SQL.Column(SQL.DateTime, nullable=False)
+    first_liked_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
     added_to_spotify_queue_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
     played_on_utc: datetime.datetime | None = SQL.Column(SQL.DateTime)
 

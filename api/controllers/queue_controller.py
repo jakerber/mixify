@@ -134,11 +134,17 @@ def upvote_song(queue_song_id: str, fpjs_visitor_id: str) -> dict:
         raise RuntimeError('queue song not found')
     if queue_song.added_to_spotify_queue_on_utc is not None:
         raise RuntimeError('song already queued on Spotify')
+    current_utc = datetime.datetime.utcnow()
 
     models.QueueSongUpvotes(
         queue_song_id=queue_song_id,
         upvoted_by_fpjs_visitor_id=fpjs_visitor_id,
-        upvoted_on_utc=datetime.datetime.utcnow()).save()
+        upvoted_on_utc=current_utc).save()
+
+    # Flag first like for queue ordering
+    if queue_song.first_liked_on_utc is None:
+        queue_song.first_liked_on_utc = current_utc
+        queue_song.save()
 
     return utils.get_queue_with_tracks(queue_song.queue, fpjs_visitor_id)
 
@@ -162,6 +168,12 @@ def remove_song_upvote(queue_song_id: str, fpjs_visitor_id: str) -> dict:
     if queue_song_upvote is None:
         raise RuntimeError('queue song upvote not found')
     queue_song_upvote.delete()
+
+    # Remove first liked flag if song has no upvotes now
+    if len(models.QueueSongUpvotes.query.filter_by(
+            queue_song_id=queue_song.id).all()) == 0:
+        queue_song.first_liked_on_utc = None
+    queue_song.save()
 
     return utils.get_queue_with_tracks(queue_song.queue, fpjs_visitor_id)
 
