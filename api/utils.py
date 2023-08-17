@@ -50,7 +50,7 @@ def get_queue_with_tracks(queue: models.Queues, fpjs_visitor_id: str) -> list:
         queue_count = 0
         boost_count = 0
         for users_queue in models.Queues.query.filter_by(
-                spotify_access_token=queue.spotify_access_token).all():
+                spotify_user_id=queue.spotify_user_id).all():
             queue_has_boost = False
             for queue_boost in models.QueueSongBoosts.query.filter_by(
                     queue_id=users_queue.id).all():
