@@ -72,7 +72,7 @@ def manage_active_queues(token: str) -> dict:
         try:
             spotify.add_to_queue(active_queue.spotify_access_token, top_song.spotify_track_uri)
         except Exception:  # pylint: disable=broad-except
-            pass  # Host has no devices active.
+            pass  # host has no devices active
         else:
             top_song.added_to_spotify_queue_on_utc = datetime.datetime.utcnow()
             top_song.save()
