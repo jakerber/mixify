@@ -4,7 +4,7 @@
 
 # Mixify
 
-A crowdsourced music app that lets anyone add songs to a host's streaming service queue from their own devices. Finally, we're all on aux.
+A crowdsourced music app that lets anyone add songs to a host's streaming service queue from their own devices. Finally, everyone can be on aux.
 
 #### ⚡ Connect instantly through your streaming service.
 <img src="screenshots/screenshot-home.png" height=600 />
